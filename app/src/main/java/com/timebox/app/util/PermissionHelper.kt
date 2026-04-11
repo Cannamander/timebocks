@@ -53,11 +53,33 @@ object PermissionHelper {
         )
     }
 
+    /**
+     * Opens battery optimization settings for this app.
+     * [Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS] often does nothing on API 31+ / emulators;
+     * we fall back to app details where the user can tap **Battery** → **Unrestricted**.
+     */
     fun openBatteryOptimizationSettings(context: Context) {
-        context.startActivity(
-            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = Uri.parse("package:${context.packageName}")
-            }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
+        val packageUri = Uri.parse("package:${context.packageName}")
+        val pm = context.packageManager
+        val newTask = Intent.FLAG_ACTIVITY_NEW_TASK
+
+        val requestIgnore = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+            data = packageUri
+            addFlags(newTask)
+        }
+        if (requestIgnore.resolveActivity(pm) != null) {
+            try {
+                context.startActivity(requestIgnore)
+                return
+            } catch (_: Exception) {
+                // Some builds resolve the intent but show no UI — fall through
+            }
+        }
+
+        val appDetails = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = packageUri
+            addFlags(newTask)
+        }
+        context.startActivity(appDetails)
     }
 }
