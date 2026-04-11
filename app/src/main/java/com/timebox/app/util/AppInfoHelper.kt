@@ -1,6 +1,7 @@
 package com.timebox.app.util
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -18,34 +19,55 @@ class AppInfoHelper @Inject constructor(
 ) {
     private val packageManager: PackageManager = context.packageManager
 
+    /**
+     * Launchable apps suitable for time limits: apps with a launcher icon, excluding this app.
+     * Uses [Intent.ACTION_MAIN] / [Intent.CATEGORY_LAUNCHER] so Android 11+ package visibility works.
+     * Treats updated system apps (e.g. Chrome from Play) like user apps.
+     */
     fun getInstalledUserApps(): List<AppInfo> {
         val myPackage = context.packageName
-        val apps = try {
+        val mainIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val resolves = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                packageManager.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(0))
+                packageManager.queryIntentActivities(
+                    mainIntent,
+                    PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_ALL.toLong())
+                )
             } else {
                 @Suppress("DEPRECATION")
-                packageManager.getInstalledApplications(0)
+                packageManager.queryIntentActivities(mainIntent, PackageManager.MATCH_ALL)
             }
         } catch (_: RuntimeException) {
             emptyList()
         }
-        return apps
+
+        return resolves
             .asSequence()
-            .filter { app ->
-                (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 &&
-                    app.packageName != myPackage
-            }
-            .mapNotNull { app ->
+            .map { it.activityInfo.packageName }
+            .distinct()
+            .filter { it != myPackage }
+            .mapNotNull { packageName ->
                 try {
-                    val label = packageManager.getApplicationLabel(app).toString()
-                    AppInfo(packageName = app.packageName, appName = label)
+                    val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                    if (!isEligibleUserFacingApp(appInfo)) return@mapNotNull null
+                    val label = packageManager.getApplicationLabel(appInfo).toString()
+                    AppInfo(packageName = packageName, appName = label)
                 } catch (_: PackageManager.NameNotFoundException) {
                     null
                 }
             }
             .sortedBy { it.appName.lowercase() }
             .toList()
+    }
+
+    /**
+     * Exclude core system packages without a meaningful "app" identity; include user installs and
+     * updated system apps (Play-updated Chrome, etc.).
+     */
+    private fun isEligibleUserFacingApp(info: ApplicationInfo): Boolean {
+        val isSystem = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+        val isUpdatedSystem = (info.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+        return !isSystem || isUpdatedSystem
     }
 
     fun getAppName(packageName: String): String {

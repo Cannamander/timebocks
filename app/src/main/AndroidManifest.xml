@@ -16,6 +16,11 @@
         tools:targetApi="33" />
 
     <queries>
+        <!-- Lets us discover launchable apps (required on API 30+); without this, app lists are empty. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
         <package android:name="com.instagram.android" />
         <package android:name="com.facebook.katana" />
         <package android:name="com.twitter.android" />
