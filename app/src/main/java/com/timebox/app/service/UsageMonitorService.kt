@@ -24,6 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.coroutines.coroutineContext
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -83,7 +84,7 @@ class UsageMonitorService : LifecycleService() {
 
     private suspend fun runMonitorLoop() {
         val loopDelayMs = if (UsageStatsHelper.TEST_MODE) 500L else 2000L
-        while (isActive) {
+        while (coroutineContext.isActive) {
             val today = TimeUtils.getTodayDateString()
             if (today != lastDate) {
                 LimitBlockRegistry.clearAll()

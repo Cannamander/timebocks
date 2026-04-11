@@ -7,6 +7,7 @@ import android.graphics.Color
 import coil.ImageLoader
 import coil.decode.DataSource
 import coil.fetch.DrawableResult
+import coil.fetch.FetchResult
 import coil.fetch.Fetcher
 import coil.request.Options
 import dagger.hilt.android.qualifiers.ApplicationContext

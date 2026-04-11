@@ -18,8 +18,8 @@ class MainApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
-    override fun getWorkManagerConfiguration(): Configuration =
-        Configuration.Builder()
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
 
@@ -31,7 +31,6 @@ class MainApplication : Application(), Configuration.Provider {
     private fun scheduleMidnightReset() {
         val wm = WorkManager.getInstance(this)
         val work = PeriodicWorkRequestBuilder<MidnightResetWorker>(1, TimeUnit.DAYS)
-            .setFlex(1, TimeUnit.HOURS)
             .setInitialDelay(TimeUtils.getMsUntilMidnight(), TimeUnit.MILLISECONDS)
             .build()
         wm.enqueueUniquePeriodicWork(
