@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Timebox</string>
+    <string name="notification_channel_screen_time_monitor">Screen Time Monitor</string>
+    <string name="notification_monitor_title">Timebox is monitoring screen time</string>
+    <string name="notification_monitor_body">Background monitoring is active</string>
+    <string name="notification_usage_permission_title">Timebox needs Usage Access</string>
+    <string name="notification_usage_permission_text">Tap to open the app and restore permission.</string>
+</resources>
