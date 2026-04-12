@@ -214,9 +214,9 @@ private fun DashboardRow(
                 trackColor = Color.White.copy(alpha = 0.1f)
             )
             val subtitle = if (item.isBlocked) {
-                "Blocked · Resets at midnight"
+                "Blocked · ${item.resetSubtitle}"
             } else {
-                val leftMs = max(0L, item.dailyLimitMs - item.usedMs)
+                val leftMs = max(0L, item.effectiveLimitMs - item.usedMs)
                 "${TimeUtils.formatDuration(item.usedMs)} used · ${TimeUtils.formatDuration(leftMs)} left"
             }
             Text(

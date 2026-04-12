@@ -7,7 +7,22 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.max
 
 object TimeUtils {
+
+    /** Length of each timebox window from [com.timebox.app.data.model.AppLimit.windowStartEpochMs]. */
+    const val WINDOW_MS_24H: Long = 24L * 60L * 60L * 1000L
+
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+
+    fun windowEndEpochMs(windowStartEpochMs: Long): Long =
+        windowStartEpochMs + WINDOW_MS_24H
+
+    /** Subtitle for dashboard / block overlay: time until the current 24h window rolls. */
+    fun formatRollingResetSubtitle(windowStartEpochMs: Long): String {
+        if (windowStartEpochMs <= 0L) return "Resets 24h after last save"
+        val end = windowEndEpochMs(windowStartEpochMs)
+        val left = max(0L, end - System.currentTimeMillis())
+        return if (left <= 0L) "Renewing window…" else "Resets in ${formatDuration(left)}"
+    }
 
     fun formatDuration(ms: Long): String {
         if (ms < 60_000L) return "< 1m"

@@ -116,7 +116,7 @@ fun SettingsScreen(
             )
             ListItem(
                 headlineContent = { Text("Reset time") },
-                supportingContent = { Text("Daily at midnight") }
+                supportingContent = { Text("24h rolling from last save per app") }
             )
             ListItem(
                 headlineContent = { Text("Clear all limits") },

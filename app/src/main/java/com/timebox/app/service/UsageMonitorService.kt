@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -16,8 +15,9 @@ import com.timebox.app.R
 import com.timebox.app.data.repository.AppLimitRepository
 import com.timebox.app.data.repository.UsageRepository
 import com.timebox.app.ui.block.BlockOverlayActivity
+import com.timebox.app.util.BypassAllowance
+import com.timebox.app.util.OverlayLaunchDebouncer
 import com.timebox.app.util.PermissionHelper
-import com.timebox.app.util.TimeUtils
 import com.timebox.app.util.UsageStatsHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
@@ -40,9 +40,8 @@ class UsageMonitorService : LifecycleService() {
     lateinit var usageStatsHelper: UsageStatsHelper
 
     private var monitorJob: Job? = null
-    private var lastDate: String = TimeUtils.getTodayDateString()
-    private var lastLimitsRefreshMs: Long = 0L
-    private var cachedLimitsMs: Map<String, Long> = emptyMap()
+    private var lastLimitedPackageRefreshMs: Long = 0L
+    private var limitedPackages: Set<String> = emptySet()
 
     override fun onCreate() {
         super.onCreate()
@@ -83,59 +82,69 @@ class UsageMonitorService : LifecycleService() {
     }
 
     private suspend fun runMonitorLoop() {
-        val loopDelayMs = if (UsageStatsHelper.TEST_MODE) 500L else 2000L
+        val slowDelayMs = if (UsageStatsHelper.TEST_MODE) 500L else 2_000L
+        val fastDelayMs = if (UsageStatsHelper.TEST_MODE) 250L else 750L
+
         while (coroutineContext.isActive) {
-            val today = TimeUtils.getTodayDateString()
-            if (today != lastDate) {
-                LimitBlockRegistry.clearAll()
-                com.timebox.app.util.BypassAllowance.clearForNewDay()
-                lastDate = today
+            val now = System.currentTimeMillis()
+
+            if (now - lastLimitedPackageRefreshMs > 30_000L) {
+                limitedPackages = appLimitRepository.getEnabledLimitsSnapshot()
+                    .map { it.packageName }
+                    .toSet()
+                lastLimitedPackageRefreshMs = now
             }
 
             if (!PermissionHelper.hasUsageStatsPermission(this)) {
                 showPermissionNotification()
-                delay(loopDelayMs)
+                delay(slowDelayMs)
                 continue
-            }
-
-            val now = System.currentTimeMillis()
-            if (now - lastLimitsRefreshMs > 30_000L) {
-                val limits = appLimitRepository.getEnabledLimitsSnapshot()
-                cachedLimitsMs = limits.associate { it.packageName to it.dailyLimitMs }
-                lastLimitsRefreshMs = now
             }
 
             val foreground = usageStatsHelper.getCurrentForegroundApp()
+            var delayMs = slowDelayMs
+
             if (foreground == null || foreground == PACKAGE_SELF) {
-                delay(loopDelayMs)
+                delay(delayMs)
                 continue
             }
 
-            val baseLimitMs = cachedLimitsMs[foreground]
-            if (baseLimitMs == null) {
-                delay(loopDelayMs)
+            if (foreground !in limitedPackages) {
+                delay(delayMs)
                 continue
             }
-            val extraMs = com.timebox.app.util.BypassAllowance.getExtraMs(foreground)
-            val limitMs = baseLimitMs + extraMs
 
-            val usedMs = usageStatsHelper.getTodayUsageMs(foreground)
+            delayMs = fastDelayMs
+
+            val limitRow = appLimitRepository.getLimitByPackage(foreground)
+            if (limitRow == null) {
+                delay(delayMs)
+                continue
+            }
+            val rolled = appLimitRepository.roll24hWindowIfNeeded(limitRow)
+            val usedMs = usageStatsHelper.getUsageMsInRange(
+                foreground,
+                rolled.windowStartEpochMs,
+                now
+            )
             try {
                 usageRepository.updateTodayUsage(foreground, usedMs)
             } catch (_: Exception) {
-                // ignore persistence failures for MVP
+                // ignore
             }
 
-            if (usedMs >= limitMs && !LimitBlockRegistry.isBlocked(foreground)) {
-                LimitBlockRegistry.markBlocked(foreground)
-                val overlayIntent = Intent(this, BlockOverlayActivity::class.java).apply {
-                    putExtra(BlockOverlayActivity.EXTRA_PACKAGE_NAME, foreground)
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                }
-                startActivity(overlayIntent)
+            val limitMs = rolled.dailyLimitMs + BypassAllowance.getExtraMs(foreground)
+
+            if (usedMs >= limitMs && OverlayLaunchDebouncer.shouldLaunch(foreground)) {
+                startActivity(
+                    Intent(this, BlockOverlayActivity::class.java).apply {
+                        putExtra(BlockOverlayActivity.EXTRA_PACKAGE_NAME, foreground)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    }
+                )
             }
 
-            delay(loopDelayMs)
+            delay(delayMs)
         }
     }
 

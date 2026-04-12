@@ -1,5 +1,6 @@
 package com.timebox.app.data.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -9,7 +10,10 @@ data class AppLimit(
     val appName: String,
     val dailyLimitMs: Long,
     val isEnabled: Boolean = true,
-    val iconByteArray: ByteArray? = null
+    val iconByteArray: ByteArray? = null,
+    /** Start of the current 24h window; usage is counted from this instant. 0 = uninitialized (treated as now on first roll). */
+    @ColumnInfo(name = "window_start_epoch_ms")
+    val windowStartEpochMs: Long = 0L
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -30,6 +34,7 @@ data class AppLimit(
         var result = packageName.hashCode()
         result = 31 * result + appName.hashCode()
         result = 31 * result + dailyLimitMs.hashCode()
+        result = 31 * result + windowStartEpochMs.hashCode()
         result = 31 * result + isEnabled.hashCode()
         result = 31 * result + (iconByteArray?.contentHashCode() ?: 0)
         return result

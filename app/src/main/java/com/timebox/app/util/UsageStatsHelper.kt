@@ -3,7 +3,6 @@ package com.timebox.app.util
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.content.pm.PackageManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -21,15 +20,27 @@ class UsageStatsHelper @Inject constructor(
     private val usageStatsManager: UsageStatsManager?
         get() = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
 
+    /** Usage since local midnight (legacy / quick estimates). */
     fun getTodayUsageMs(packageName: String): Long {
         if (!PermissionHelper.hasUsageStatsPermission(context)) return 0L
+        return getUsageMsInRange(
+            packageName,
+            TimeUtils.getTodayMidnightMs(),
+            System.currentTimeMillis()
+        )
+    }
+
+    /**
+     * Foreground time for [packageName] between [beginMs] and [endMs] (inclusive window for query).
+     */
+    fun getUsageMsInRange(packageName: String, beginMs: Long, endMs: Long): Long {
+        if (!PermissionHelper.hasUsageStatsPermission(context)) return 0L
         val manager = usageStatsManager ?: return 0L
-        val begin = TimeUtils.getTodayMidnightMs()
-        val end = System.currentTimeMillis()
+        if (endMs <= beginMs) return 0L
         val stats = manager.queryUsageStats(
-            UsageStatsManager.INTERVAL_DAILY,
-            begin,
-            end
+            UsageStatsManager.INTERVAL_BEST,
+            beginMs,
+            endMs
         ) ?: return 0L
         var total = 0L
         for (s in stats) {
@@ -58,11 +69,15 @@ class UsageStatsHelper @Inject constructor(
         return map
     }
 
+    /**
+     * Best-effort current foreground package: most recently used app in a recent time window.
+     * Uses a longer window so the limit still applies while the user keeps the app open.
+     */
     fun getCurrentForegroundApp(): String? {
         if (!PermissionHelper.hasUsageStatsPermission(context)) return null
         val manager = usageStatsManager ?: return null
         val end = System.currentTimeMillis()
-        val begin = end - TimeUnit.SECONDS.toMillis(5)
+        val begin = end - TimeUnit.SECONDS.toMillis(60)
         val stats = manager.queryUsageStats(UsageStatsManager.INTERVAL_BEST, begin, end)
             ?: return null
         var latest: UsageStats? = null
@@ -76,3 +91,4 @@ class UsageStatsHelper @Inject constructor(
         return pkg.takeIf { it != context.packageName }
     }
 }
+

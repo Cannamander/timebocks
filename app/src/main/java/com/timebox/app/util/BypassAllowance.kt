@@ -14,6 +14,10 @@ object BypassAllowance {
 
     fun getExtraMs(packageName: String): Long = extraMsByPackage[packageName] ?: 0L
 
+    fun clearPackage(packageName: String) {
+        extraMsByPackage.remove(packageName)
+    }
+
     fun clearForNewDay() {
         extraMsByPackage.clear()
     }

@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.timebox.app.data.model.AppLimit
 import com.timebox.app.data.repository.AppLimitRepository
 import com.timebox.app.service.ServiceManager
+import com.timebox.app.util.BypassAllowance
+import com.timebox.app.util.TimeUtils
 import com.timebox.app.util.UsageStatsHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,9 +22,12 @@ data class DashboardItem(
     val packageName: String,
     val appName: String,
     val dailyLimitMs: Long,
+    /** Limit including temporary bypass allowance. */
+    val effectiveLimitMs: Long,
     val usedMs: Long,
     val percentUsed: Float,
-    val isBlocked: Boolean
+    val isBlocked: Boolean,
+    val resetSubtitle: String
 )
 
 data class DashboardState(
@@ -72,20 +77,30 @@ class DashboardViewModel @Inject constructor(
     }
 
     private suspend fun refreshUsageInternal(limits: List<AppLimit>) {
+        val now = System.currentTimeMillis()
         val items = limits.map { limit ->
-            val used = usageStatsHelper.getTodayUsageMs(limit.packageName)
-            val pct = if (limit.dailyLimitMs > 0) {
-                (used.toFloat() / limit.dailyLimitMs.toFloat()).coerceIn(0f, 1f)
+            val rolled = appLimitRepository.roll24hWindowIfNeeded(limit)
+            val used = usageStatsHelper.getUsageMsInRange(
+                rolled.packageName,
+                rolled.windowStartEpochMs,
+                now
+            )
+            val extra = BypassAllowance.getExtraMs(rolled.packageName)
+            val effectiveLimit = rolled.dailyLimitMs + extra
+            val pct = if (effectiveLimit > 0) {
+                (used.toFloat() / effectiveLimit.toFloat()).coerceIn(0f, 1f)
             } else {
                 0f
             }
             DashboardItem(
-                packageName = limit.packageName,
-                appName = limit.appName,
-                dailyLimitMs = limit.dailyLimitMs,
+                packageName = rolled.packageName,
+                appName = rolled.appName,
+                dailyLimitMs = rolled.dailyLimitMs,
+                effectiveLimitMs = effectiveLimit,
                 usedMs = used,
                 percentUsed = pct,
-                isBlocked = used >= limit.dailyLimitMs
+                isBlocked = used >= effectiveLimit,
+                resetSubtitle = TimeUtils.formatRollingResetSubtitle(rolled.windowStartEpochMs)
             )
         }
         _state.update {

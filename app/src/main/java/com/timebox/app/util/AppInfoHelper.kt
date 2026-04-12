@@ -2,7 +2,6 @@ package com.timebox.app.util
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -20,9 +19,9 @@ class AppInfoHelper @Inject constructor(
     private val packageManager: PackageManager = context.packageManager
 
     /**
-     * Launchable apps suitable for time limits: apps with a launcher icon, excluding this app.
-     * Uses [Intent.ACTION_MAIN] / [Intent.CATEGORY_LAUNCHER] so Android 11+ package visibility works.
-     * Treats updated system apps (e.g. Chrome from Play) like user apps.
+     * Apps that appear in the launcher (MAIN + LAUNCHER), excluding this app.
+     * Includes preinstalled system apps (Gmail, Messages, etc.) so users can limit them, not only
+     * user-installed or Play-updated apps. Uses the same intent query as the manifest `<queries>`.
      */
     fun getInstalledUserApps(): List<AppInfo> {
         val myPackage = context.packageName
@@ -49,7 +48,6 @@ class AppInfoHelper @Inject constructor(
             .mapNotNull { packageName ->
                 try {
                     val appInfo = packageManager.getApplicationInfo(packageName, 0)
-                    if (!isEligibleUserFacingApp(appInfo)) return@mapNotNull null
                     val label = packageManager.getApplicationLabel(appInfo).toString()
                     AppInfo(packageName = packageName, appName = label)
                 } catch (_: PackageManager.NameNotFoundException) {
@@ -58,16 +56,6 @@ class AppInfoHelper @Inject constructor(
             }
             .sortedBy { it.appName.lowercase() }
             .toList()
-    }
-
-    /**
-     * Exclude core system packages without a meaningful "app" identity; include user installs and
-     * updated system apps (Play-updated Chrome, etc.).
-     */
-    private fun isEligibleUserFacingApp(info: ApplicationInfo): Boolean {
-        val isSystem = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-        val isUpdatedSystem = (info.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-        return !isSystem || isUpdatedSystem
     }
 
     fun getAppName(packageName: String): String {
