@@ -30,6 +30,15 @@ class GamificationRepository @Inject constructor(
     private fun today(): String = TimeUtils.getTodayDateString()
     private fun yesterday(): String = LocalDate.now().minusDays(1).format(dateFormatter)
 
+    /**
+     * Ensures singleton gamification rows exist before collecting Room [Flow]s that observe them.
+     * Safe to call on every cold start (INSERT OR IGNORE).
+     */
+    suspend fun bootstrap() {
+        bocksLedgerDao.initIfNeeded()
+        streakRecordDao.initIfNeeded()
+    }
+
     suspend fun getExtensionCount(packageName: String): Int =
         extensionLogDao.getExtensionCount(packageName, today())
 
@@ -43,7 +52,7 @@ class GamificationRepository @Inject constructor(
         extensionLogDao.getAnyExtensionToday(today())
 
     fun getBocksBalance(): Flow<Int> =
-        bocksLedgerDao.getBalance().map { it.balance }
+        bocksLedgerDao.getBalance().map { ledger -> ledger?.balance ?: 0 }
 
     suspend fun getBocksBalanceOnce(): Int {
         bocksLedgerDao.initIfNeeded()
@@ -62,7 +71,8 @@ class GamificationRepository @Inject constructor(
         return bocksLedgerDao.spendBocks(amount)
     }
 
-    fun getStreak(): Flow<StreakRecord> = streakRecordDao.getStreak()
+    fun getStreak(): Flow<StreakRecord> =
+        streakRecordDao.getStreak().map { row -> row ?: StreakRecord() }
 
     suspend fun getStreakOnce(): StreakRecord? = streakRecordDao.getStreakOnce()
 

@@ -30,7 +30,8 @@ fun TimeboxApp() {
     val context = LocalContext.current
     val startDestination = remember {
         if (PermissionHelper.hasUsageStatsPermission(context) &&
-            PermissionHelper.hasOverlayPermission(context)
+            PermissionHelper.hasOverlayPermission(context) &&
+            PermissionHelper.hasBatteryOptimizationExemption(context)
         ) {
             NavRoutes.DASHBOARD
         } else {

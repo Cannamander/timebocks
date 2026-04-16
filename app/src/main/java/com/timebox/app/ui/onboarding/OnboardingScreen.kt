@@ -115,7 +115,8 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(16.dp))
         PermissionCard(
             title = "Battery Optimization",
-            description = "Keeps monitoring active in the background",
+            description = "Keeps monitoring active in the background. " +
+                "Some phones mark this “granted” early — if unsure, tap Open and set Battery to Unrestricted.",
             granted = state.batteryGranted,
             onGrant = { viewModel.openBatterySettings(context) }
         )
@@ -123,7 +124,10 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(48.dp))
 
         Button(
-            onClick = onComplete,
+            onClick = {
+                viewModel.refreshPermissions()
+                if (viewModel.allGranted) onComplete()
+            },
             enabled = viewModel.allGranted,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(

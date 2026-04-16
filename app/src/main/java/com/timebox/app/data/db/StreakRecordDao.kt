@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 interface StreakRecordDao {
 
     @Query("SELECT * FROM streak_record WHERE id = 1 LIMIT 1")
-    fun getStreak(): Flow<StreakRecord>
+    fun getStreak(): Flow<StreakRecord?>
 
     @Query("SELECT * FROM streak_record WHERE id = 1 LIMIT 1")
     suspend fun getStreakOnce(): StreakRecord?

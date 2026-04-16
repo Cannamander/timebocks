@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import javax.inject.Inject
 
 data class DashboardItem(
@@ -64,40 +65,41 @@ class DashboardViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            appLimitRepository.getEnabledLimits().collect { limits ->
-                refreshUsageInternal(limits)
-            }
-        }
-
-        viewModelScope.launch {
-            gamificationRepository.getBocksBalance().collect { bocks ->
-                _state.update { it.copy(bocksBalance = bocks) }
-                updatePercyLine()
-            }
-        }
-
-        viewModelScope.launch {
-            gamificationRepository.getStreak().collect { streak ->
-                _state.update { it.copy(currentStreak = streak.currentStreak) }
-                updatePercyLine()
-            }
-        }
-
-        viewModelScope.launch {
-            _state.update { it.copy(unseenAchievements = gamificationRepository.getUnseenAchievements()) }
-        }
-
-        viewModelScope.launch {
-            val pending = appPreferences.getPendingStreakMilestone()
-            if (pending > 0) {
-                _state.update { it.copy(pendingStreakMilestone = pending) }
-            }
-        }
-
-        viewModelScope.launch {
-            if (dailySummaryManager.shouldShowSummary()) {
-                val line = dailySummaryManager.getDailySummaryDialogue()
-                _state.update { it.copy(showDailySummary = true, dailySummaryLine = line) }
+            // Room Flows for singleton rows do not emit until a row exists; seed defaults first.
+            gamificationRepository.bootstrap()
+            supervisorScope {
+                launch {
+                    appLimitRepository.getEnabledLimits().collect { limits ->
+                        refreshUsageInternal(limits)
+                    }
+                }
+                launch {
+                    gamificationRepository.getBocksBalance().collect { bocks ->
+                        _state.update { it.copy(bocksBalance = bocks) }
+                        updatePercyLine()
+                    }
+                }
+                launch {
+                    gamificationRepository.getStreak().collect { streak ->
+                        _state.update { it.copy(currentStreak = streak.currentStreak) }
+                        updatePercyLine()
+                    }
+                }
+                launch {
+                    _state.update { it.copy(unseenAchievements = gamificationRepository.getUnseenAchievements()) }
+                }
+                launch {
+                    val pending = appPreferences.getPendingStreakMilestone()
+                    if (pending > 0) {
+                        _state.update { it.copy(pendingStreakMilestone = pending) }
+                    }
+                }
+                launch {
+                    if (dailySummaryManager.shouldShowSummary()) {
+                        val line = dailySummaryManager.getDailySummaryDialogue()
+                        _state.update { it.copy(showDailySummary = true, dailySummaryLine = line) }
+                    }
+                }
             }
         }
     }

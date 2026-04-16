@@ -33,6 +33,12 @@ object PermissionHelper {
     fun hasOverlayPermission(context: Context): Boolean =
         Settings.canDrawOverlays(context)
 
+    /**
+     * True when the OS reports this package is exempt from “normal” battery optimizations.
+     * This is the best public signal Android exposes, but some OEM builds can report “true”
+     * before you’ve actually opened Battery settings — treat onboarding UI as advisory and
+     * always offer the Open action.
+     */
     fun hasBatteryOptimizationExemption(context: Context): Boolean {
         val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         return pm.isIgnoringBatteryOptimizations(context.packageName)

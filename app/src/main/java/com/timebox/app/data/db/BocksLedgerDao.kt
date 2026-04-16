@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 interface BocksLedgerDao {
 
     @Query("SELECT * FROM bocks_ledger WHERE id = 1 LIMIT 1")
-    fun getBalance(): Flow<BocksLedger>
+    fun getBalance(): Flow<BocksLedger?>
 
     @Query("SELECT * FROM bocks_ledger WHERE id = 1 LIMIT 1")
     suspend fun getBalanceOnce(): BocksLedger?
