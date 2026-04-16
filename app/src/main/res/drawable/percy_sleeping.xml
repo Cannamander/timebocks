@@ -31,21 +31,25 @@
         android:strokeLineJoin="round"
         android:pathData="M-12-8C-14-20-8-26 0-22 8-26 14-20 12-8Z"/>
     <path
+        android:fillColor="#00000000"
         android:strokeColor="#FF2C1808"
         android:strokeWidth="2.5"
         android:strokeLineCap="round"
         android:pathData="M-7 20Q0 24 7 20"/>
     <path
+        android:fillColor="#00000000"
         android:strokeColor="#FF2C1808"
         android:strokeWidth="4"
         android:strokeLineCap="round"
         android:pathData="M-34 10Q-22 4-10 10"/>
     <path
+        android:fillColor="#00000000"
         android:strokeColor="#FF2C1808"
         android:strokeWidth="4"
         android:strokeLineCap="round"
         android:pathData="M10 10Q22 4 34 10"/>
     <path
+        android:fillColor="#00000000"
         android:fillAlpha="0.5"
         android:strokeColor="#FF2C1808"
         android:strokeAlpha="0.5"
@@ -53,6 +57,7 @@
         android:strokeLineCap="round"
         android:pathData="M-32-2Q-22-5-12-2"/>
     <path
+        android:fillColor="#00000000"
         android:fillAlpha="0.5"
         android:strokeColor="#FF2C1808"
         android:strokeAlpha="0.5"

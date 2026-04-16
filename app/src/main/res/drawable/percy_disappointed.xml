@@ -31,16 +31,19 @@
         android:strokeLineJoin="round"
         android:pathData="M-14-8C-18-22-10-30 0-24 10-30 18-22 14-8Z"/>
     <path
+        android:fillColor="#00000000"
         android:strokeColor="#FF2C1808"
         android:strokeWidth="2.5"
         android:strokeLineCap="round"
         android:pathData="M-9 24Q0 18 9 24"/>
     <path
+        android:fillColor="#00000000"
         android:strokeColor="#FF2C1808"
         android:strokeWidth="3.5"
         android:strokeLineCap="round"
         android:pathData="M-34-2Q-22-10-10-4"/>
     <path
+        android:fillColor="#00000000"
         android:strokeColor="#FF2C1808"
         android:strokeWidth="3.5"
         android:strokeLineCap="round"
