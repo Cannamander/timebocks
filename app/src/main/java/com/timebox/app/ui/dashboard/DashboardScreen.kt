@@ -14,7 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -89,8 +92,11 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Timebox") },
+                title = { Text("Home") },
                 actions = {
+                    IconButton(onClick = onOpenAchievements) {
+                        Icon(Icons.Filled.EmojiEvents, contentDescription = "Achievements")
+                    }
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
@@ -122,112 +128,128 @@ fun DashboardScreen(
                 ) {
                     CircularProgressIndicator()
                 }
-            } else if (state.items.isEmpty()) {
-                EmptyDashboard(
-                    onAddApps = onAddApps,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                )
             } else {
-                if (state.pendingStreakMilestone > 0) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .clickable { viewModel.onStreakMilestoneSeen() },
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Streak milestone: ${state.pendingStreakMilestone} days",
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Tap to dismiss",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
-                }
-
-                if (state.showDailySummary) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF161618))
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Percy's morning briefing", fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.padding(4.dp))
-                            Text(state.dailySummaryLine, color = Color.White.copy(alpha = 0.9f))
-                            Spacer(modifier = Modifier.padding(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                TextButton(onClick = { viewModel.onDailySummaryDismissed() }) {
-                                    Text("Got it")
-                                }
-                            }
-                        }
-                    }
-                }
-
-                PercyWidget(
-                    dialogueLine = state.percyLine,
-                    emotion = if (state.items.any { it.percentUsed >= 0.8f }) PercyEmotion.WORRIED else PercyEmotion.CALM,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    percySizeDp = 80
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StatCard(
-                        label = "Bocks",
-                        value = state.bocksBalance.toString(),
-                        sub = "earned",
-                        valueColor = Color(0xFFFFB300),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { onOpenAchievements() }
-                    )
-                    StatCard(
-                        label = "Streak",
-                        value = state.currentStreak.toString(),
-                        sub = "days",
-                        valueColor = if (state.currentStreak > 0) Color(0xFF81C784) else Color.White.copy(alpha = 0.6f),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                val within = state.items.count { !it.isBlocked }
-                val total = state.items.size
-                val summaryColor = when {
-                    state.items.any { it.isBlocked } -> Color(0xFFCF6679)
-                    state.items.any { it.percentUsed >= 0.8f } -> Color(0xFFFFB74D)
-                    else -> Color(0xFF81C784)
-                }
-                SummaryCard(
-                    text = "$within of $total apps within limit today",
-                    color = summaryColor
-                )
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    items(state.items, key = { it.packageName }) { item ->
-                        DashboardRow(
-                            item = item,
-                            onClick = { onOpenAppList(item.packageName) }
+                    item {
+                        LandingHeroCard(
+                            bocksBalance = state.bocksBalance,
+                            bocksLifetimeEarned = state.bocksLifetimeEarned,
+                            streakDays = state.currentStreak,
+                            onOpenAchievements = onOpenAchievements,
+                            onManageApps = onAddApps
                         )
+                    }
+                    item {
+                        PercyWidget(
+                            dialogueLine = state.percyLine,
+                            emotion = if (state.items.any { it.percentUsed >= 0.8f }) {
+                                PercyEmotion.WORRIED
+                            } else {
+                                PercyEmotion.CALM
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            percySizeDp = 108
+                        )
+                    }
+                    if (state.pendingStreakMilestone > 0) {
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .clickable { viewModel.onStreakMilestoneSeen() },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "Streak milestone: ${state.pendingStreakMilestone} days",
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Tap to dismiss",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.6f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (state.showDailySummary) {
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF161618))
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text("Percy's morning briefing", fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.padding(4.dp))
+                                    Text(state.dailySummaryLine, color = Color.White.copy(alpha = 0.9f))
+                                    Spacer(modifier = Modifier.padding(8.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        TextButton(onClick = { viewModel.onDailySummaryDismissed() }) {
+                                            Text("Got it")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (state.items.isEmpty()) {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "No apps timeboxed yet",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.padding(8.dp))
+                                Text(
+                                    text = "Add apps to see them here with usage and limits.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.75f)
+                                )
+                                Spacer(modifier = Modifier.padding(16.dp))
+                                Button(onClick = onAddApps) {
+                                    Text("Add apps")
+                                }
+                            }
+                        }
+                    } else {
+                        item {
+                            val within = state.items.count { !it.isBlocked }
+                            val total = state.items.size
+                            val summaryColor = when {
+                                state.items.any { it.isBlocked } -> Color(0xFFCF6679)
+                                state.items.any { it.percentUsed >= 0.8f } -> Color(0xFFFFB74D)
+                                else -> Color(0xFF81C784)
+                            }
+                            SummaryCard(
+                                text = "$within of $total apps within limit today",
+                                color = summaryColor
+                            )
+                        }
+                        items(state.items, key = { it.packageName }) { item ->
+                            DashboardRow(
+                                item = item,
+                                onClick = { onOpenAppList(item.packageName) }
+                            )
+                        }
                     }
                 }
             }
@@ -236,21 +258,80 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun StatCard(
-    label: String,
-    value: String,
-    sub: String,
-    valueColor: Color,
-    modifier: Modifier = Modifier
+private fun LandingHeroCard(
+    bocksBalance: Int,
+    bocksLifetimeEarned: Int,
+    streakDays: Int,
+    onOpenAchievements: () -> Unit,
+    onManageApps: () -> Unit
 ) {
     Card(
-        modifier = modifier,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.75f))
-            Text(text = value, fontWeight = FontWeight.Bold, color = valueColor)
-            Text(text = sub, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.6f))
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "Bocks & streak",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Balance", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                    Text(
+                        text = bocksBalance.toString(),
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFB300),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Text("spendable", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.55f))
+                }
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Lifetime", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                    Text(
+                        text = bocksLifetimeEarned.toString(),
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFE082),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Text("earned total", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.55f))
+                }
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                    Text("Streak", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                    Text(
+                        text = streakDays.toString(),
+                        fontWeight = FontWeight.Bold,
+                        color = if (streakDays > 0) Color(0xFF81C784) else Color.White.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Text("clean days", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.55f))
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = onOpenAchievements,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Achievements")
+                }
+                OutlinedButton(
+                    onClick = onManageApps,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Manage apps")
+                }
+            }
         }
     }
 }
@@ -354,29 +435,6 @@ private fun DashboardRow(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp)
             )
-        }
-    }
-}
-
-@Composable
-private fun EmptyDashboard(
-    onAddApps: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "No apps limited yet",
-            style = MaterialTheme.typography.titleMedium
-        )
-        Spacer(modifier = Modifier.padding(16.dp))
-        androidx.compose.material3.Button(onClick = onAddApps) {
-            Text("Add apps")
         }
     }
 }

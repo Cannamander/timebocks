@@ -6,6 +6,7 @@ import com.timebox.app.data.db.BocksLedgerDao
 import com.timebox.app.data.db.ExtensionLogDao
 import com.timebox.app.data.db.StreakRecordDao
 import com.timebox.app.data.model.AchievementRecord
+import com.timebox.app.data.model.BocksLedger
 import com.timebox.app.data.model.StreakRecord
 import com.timebox.app.data.store.AppPreferences
 import com.timebox.app.util.TimeUtils
@@ -53,6 +54,9 @@ class GamificationRepository @Inject constructor(
 
     fun getBocksBalance(): Flow<Int> =
         bocksLedgerDao.getBalance().map { ledger -> ledger?.balance ?: 0 }
+
+    fun getBocksLedger(): Flow<BocksLedger> =
+        bocksLedgerDao.getBalance().map { it ?: BocksLedger() }
 
     suspend fun getBocksBalanceOnce(): Int {
         bocksLedgerDao.initIfNeeded()

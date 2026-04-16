@@ -8,11 +8,10 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.timebox.app.R
@@ -49,6 +49,11 @@ fun PercyEmotion.toDrawableRes(): Int = when (this) {
     PercyEmotion.SLEEPING -> R.drawable.percy_sleeping
 }
 
+/**
+ * Percy + speech bubble. Uses a **column** layout so the mascot is not squeezed beside long text
+ * (which was clipping him in a tight [Row]). Vector assets include negative path coordinates; the
+ * drawable viewports were expanded so the full chicken renders.
+ */
 @Composable
 fun PercyWidget(
     dialogueLine: String,
@@ -56,24 +61,35 @@ fun PercyWidget(
     modifier: Modifier = Modifier,
     percySizeDp: Int = 80
 ) {
-    Row(
+    val artHeight = (percySizeDp + 28).dp
+    Column(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Image(
-            painter = painterResource(id = emotion.toDrawableRes()),
-            contentDescription = "Percy is ${emotion.name.lowercase()}",
-            modifier = Modifier.size(percySizeDp.dp)
-        )
-
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(artHeight),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = emotion.toDrawableRes()),
+                contentDescription = "Percy is ${emotion.name.lowercase()}",
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .fillMaxWidth()
+                    .height(artHeight),
+                contentScale = ContentScale.Fit
+            )
+        }
         if (dialogueLine.isNotBlank()) {
             SpeechBubble(
                 text = dialogueLine,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp)
             )
-        } else {
-            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
@@ -103,4 +119,3 @@ private fun SpeechBubble(
         }
     }
 }
-

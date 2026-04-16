@@ -42,6 +42,8 @@ data class DashboardState(
     val isMonitoring: Boolean = false,
     val isLoading: Boolean = true,
     val bocksBalance: Int = 0,
+    /** Total Bocks ever credited (ledger). */
+    val bocksLifetimeEarned: Int = 0,
     val currentStreak: Int = 0,
     val percyLine: String = "",
     val unseenAchievements: List<AchievementRecord> = emptyList(),
@@ -74,8 +76,13 @@ class DashboardViewModel @Inject constructor(
                     }
                 }
                 launch {
-                    gamificationRepository.getBocksBalance().collect { bocks ->
-                        _state.update { it.copy(bocksBalance = bocks) }
+                    gamificationRepository.getBocksLedger().collect { ledger ->
+                        _state.update {
+                            it.copy(
+                                bocksBalance = ledger.balance,
+                                bocksLifetimeEarned = ledger.lifetimeEarned
+                            )
+                        }
                         updatePercyLine()
                     }
                 }
