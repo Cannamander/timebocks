@@ -28,11 +28,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +47,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.timebox.app.ui.components.PercyEmotion
+import com.timebox.app.ui.components.PercyWidget
 import com.timebox.app.data.repository.AppLimitRepository
 import com.timebox.app.util.AppInfoHelper
 import com.timebox.app.util.BypassAllowance
@@ -57,6 +59,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import javax.inject.Inject
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @AndroidEntryPoint
 class BlockOverlayActivity : ComponentActivity() {
@@ -114,12 +118,15 @@ private fun BlockOverlayScreen(
     appLimitRepository: AppLimitRepository,
     usageStatsHelper: UsageStatsHelper,
     onGoHome: () -> Unit,
-    onBypassComplete: () -> Unit
+    onBypassComplete: () -> Unit,
+    viewModel: BlockOverlayViewModel = hiltViewModel()
 ) {
     BackHandler { }
 
     val bg = Color(0xFF0A0A0A)
     val accentRed = Color(0xFFC62828)
+
+    val vmState by viewModel.state.collectAsStateWithLifecycle()
 
     var appName by remember { mutableStateOf(packageName) }
     var limitMs by remember { mutableLongStateOf(0L) }
@@ -139,35 +146,38 @@ private fun BlockOverlayScreen(
             now
         )
         resetSubtitle = TimeUtils.formatRollingResetSubtitle(rolled.windowStartEpochMs)
+
+        viewModel.onScreenOpened(packageName = packageName, appName = appName)
     }
 
-    /** 0 = show hold control; 1 = hold complete, show confirm for 5 min bypass */
-    var bypassStage by remember { mutableIntStateOf(0) }
     val holdInteractionSource = remember { MutableInteractionSource() }
     val isPressingHold by holdInteractionSource.collectIsPressedAsState()
     var holdProgress by remember { mutableFloatStateOf(0f) }
+    var holdCompleted by remember { mutableStateOf(false) }
 
     val holdDurationMs = 10_000L
 
     LaunchedEffect(isPressingHold) {
         if (!isPressingHold) {
-            if (holdProgress < 1f && holdProgress > 0f) {
-                holdProgress = 0f
-            }
+            holdProgress = 0f
+            holdCompleted = false
             return@LaunchedEffect
         }
+        if (holdCompleted) return@LaunchedEffect
         var ms = 0L
         while (ms < holdDurationMs) {
             delay(50)
             if (!isPressingHold) {
                 holdProgress = 0f
+                holdCompleted = false
                 return@LaunchedEffect
             }
             ms += 50
             holdProgress = (ms.toFloat() / holdDurationMs.toFloat()).coerceIn(0f, 1f)
         }
         holdProgress = 1f
-        bypassStage = 1
+        holdCompleted = true
+        viewModel.onExtendTapped(packageName = packageName, appName = appName)
     }
 
     val animatedProgress by animateFloatAsState(
@@ -176,6 +186,20 @@ private fun BlockOverlayScreen(
         label = "bypassProgress"
     )
 
+    LaunchedEffect(vmState.blockPhase) {
+        when (vmState.blockPhase) {
+            BlockPhase.ExtensionGranted -> {
+                delay(1500)
+                onBypassComplete()
+            }
+            BlockPhase.WalkedAway -> {
+                delay(1200)
+                onGoHome()
+            }
+            else -> Unit
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -183,7 +207,24 @@ private fun BlockOverlayScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+
+        PercyWidget(
+            dialogueLine = vmState.percyDialogue,
+            emotion = when (vmState.blockPhase) {
+                BlockPhase.LimitReached -> PercyEmotion.WORRIED
+                BlockPhase.FirstExtension -> PercyEmotion.SKEPTICAL
+                BlockPhase.SecondChallenge -> PercyEmotion.WORRIED
+                BlockPhase.ThirdRefusal -> if (vmState.showBocksOption) PercyEmotion.ANGRY else PercyEmotion.PANIC
+                BlockPhase.BocksPrompt -> PercyEmotion.SKEPTICAL
+                BlockPhase.ExtensionGranted -> PercyEmotion.DISAPPOINTED
+                BlockPhase.WalkedAway -> PercyEmotion.HAPPY
+            },
+            modifier = Modifier.fillMaxWidth(),
+            percySizeDp = 120
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
         AsyncImage(
             model = PackageIcon(packageName),
             contentDescription = appName,
@@ -231,8 +272,8 @@ private fun BlockOverlayScreen(
         val holdSecondsLeft =
             (((1f - holdProgress) * (holdDurationMs / 1000f)).coerceAtLeast(0f)).roundToInt()
 
-        when (bypassStage) {
-            0 -> {
+        when (vmState.blockPhase) {
+            BlockPhase.LimitReached -> {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "Press and hold for 10 seconds to add 5 minutes to your limit for this window.",
@@ -289,28 +330,83 @@ private fun BlockOverlayScreen(
                     )
                 }
             }
-            1 -> {
+            BlockPhase.SecondChallenge -> {
+                var answer by remember { mutableStateOf("") }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Extra time applies to this 24h window only.",
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 13.sp,
+                        text = vmState.challengeQuestion.ifBlank { "Why do you actually need more time?" },
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 14.sp,
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
+                    TextField(
+                        value = answer,
+                        onValueChange = { answer = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Type a real reason (10+ characters)") }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                     Button(
-                        onClick = onBypassComplete,
+                        onClick = { viewModel.onChallengeAnswered(packageName, appName, answer) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = answer.trim().isNotEmpty()
+                    ) {
+                        Text("Submit")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { viewModel.onGoHomeTapped(appName) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Add 5 minutes to limit")
+                        Text("Never mind")
                     }
                 }
             }
+            BlockPhase.ThirdRefusal -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (vmState.showBocksOption) {
+                        Text(
+                            text = "Bocks: ${vmState.bocksBalance}",
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { viewModel.onSpendBocks(packageName, appName) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Spend 20 Bocks for 5 more minutes")
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "This uses Bocks you've earned through discipline.",
+                            color = Color.White.copy(alpha = 0.55f),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+            BlockPhase.ExtensionGranted -> {
+                Text(
+                    text = "Extension granted. Don't make me regret this.",
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 14.sp
+                )
+            }
+            BlockPhase.WalkedAway -> {
+                Text(
+                    text = "Good. Walk away.",
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 14.sp
+                )
+            }
+            BlockPhase.FirstExtension,
+            BlockPhase.BocksPrompt -> Unit
         }
 
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedButton(
-            onClick = onGoHome,
+            onClick = { viewModel.onGoHomeTapped(appName) },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Go Home")

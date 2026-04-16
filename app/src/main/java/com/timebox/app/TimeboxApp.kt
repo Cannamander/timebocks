@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.timebox.app.ui.NavRoutes
+import com.timebox.app.ui.achievements.AchievementsScreen
 import com.timebox.app.ui.applist.AppListScreen
 import com.timebox.app.ui.dashboard.DashboardScreen
 import com.timebox.app.ui.onboarding.OnboardingScreen
@@ -58,7 +59,8 @@ fun TimeboxApp() {
                     DashboardScreen(
                         onAddApps = { navController.navigate(NavRoutes.APP_LIST) },
                         onSettings = { navController.navigate(NavRoutes.SETTINGS) },
-                        onOpenAppList = { navController.navigate(NavRoutes.APP_LIST) }
+                        onOpenAppList = { navController.navigate(NavRoutes.APP_LIST) },
+                        onOpenAchievements = { navController.navigate(NavRoutes.ACHIEVEMENTS) }
                     )
                 }
                 composable(NavRoutes.APP_LIST) {
@@ -66,10 +68,14 @@ fun TimeboxApp() {
                         onDone = { navController.popBackStack() }
                     )
                 }
+                composable(NavRoutes.ACHIEVEMENTS) {
+                    AchievementsScreen(onBack = { navController.popBackStack() })
+                }
                 composable(NavRoutes.SETTINGS) {
                     SettingsScreen(
                         onBack = { navController.popBackStack() },
                         onOpenAppList = { navController.navigate(NavRoutes.APP_LIST) },
+                        onOpenAchievements = { navController.navigate(NavRoutes.ACHIEVEMENTS) },
                         onResetPermissions = {
                             navController.navigate(NavRoutes.ONBOARDING) {
                                 popUpTo(NavRoutes.DASHBOARD) { inclusive = false }

@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenAppList: () -> Unit,
+    onOpenAchievements: () -> Unit,
     onResetPermissions: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -147,6 +148,13 @@ fun SettingsScreen(
             ListItem(
                 headlineContent = { Text("Version") },
                 supportingContent = { Text(state.appVersion) }
+            )
+            ListItem(
+                headlineContent = { Text("Achievements") },
+                supportingContent = { Text("Percy's Trophy Case") },
+                trailingContent = {
+                    TextButton(onClick = onOpenAchievements) { Text("Open") }
+                }
             )
             ListItem(
                 headlineContent = { Text("Permissions") },

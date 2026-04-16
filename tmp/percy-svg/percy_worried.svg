@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-70 -20 140 165" width="200" height="200">
+  <!-- shadow -->
+  <ellipse cx="0" cy="132" rx="38" ry="6" fill="#111111" opacity="0.3"/>
+  <!-- body blob -->
+  <path d="M0,-10 C-52,-10 -65,28 -65,72 C-65,114 -36,132 0,132 C36,132 65,114 65,72 C65,28 52,-10 0,-10 Z" fill="#F5D020" stroke="#2C1808" stroke-width="5" stroke-linejoin="round"/>
+  <!-- belly highlight -->
+  <ellipse cx="0" cy="85" rx="32" ry="36" fill="#FFF5A0" opacity="0.45"/>
+  <!-- body gloss -->
+  <ellipse cx="-18" cy="12" rx="12" ry="8" fill="white" opacity="0.18" transform="rotate(-20,-18,12)"/>
+  <!-- left wing slightly lifted tense -->
+  <path d="M-65,56 C-82,44 -90,60 -85,76 C-80,88 -66,86 -60,75 Z" fill="#E8C010" stroke="#2C1808" stroke-width="4" stroke-linejoin="round"/>
+  <line x1="-82" y1="79" x2="-78" y2="87" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <line x1="-73" y1="83" x2="-71" y2="91" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <line x1="-64" y1="83" x2="-64" y2="92" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <!-- right wing slightly lifted tense -->
+  <path d="M65,56 C82,44 90,60 85,76 C80,88 66,86 60,75 Z" fill="#E8C010" stroke="#2C1808" stroke-width="4" stroke-linejoin="round"/>
+  <line x1="82" y1="79" x2="78" y2="87" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <line x1="73" y1="83" x2="71" y2="91" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <line x1="64" y1="83" x2="64" y2="92" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <!-- left foot -->
+  <ellipse cx="-20" cy="130" rx="14" ry="7" fill="#E87020" stroke="#2C1808" stroke-width="3"/>
+  <line x1="-30" y1="132" x2="-36" y2="140" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="-20" y1="134" x2="-20" y2="142" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="-10" y1="132" x2="-6" y2="140" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- right foot -->
+  <ellipse cx="20" cy="130" rx="14" ry="7" fill="#E87020" stroke="#2C1808" stroke-width="3"/>
+  <line x1="10" y1="132" x2="6" y2="140" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="20" y1="134" x2="20" y2="142" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="30" y1="132" x2="36" y2="140" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- comb -->
+  <path d="M-14,-8 C-18,-26 -8,-36 0,-28 C8,-36 18,-26 14,-8 Z" fill="#D44020" stroke="#2C1808" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- wattle -->
+  <ellipse cx="16" cy="28" rx="6" ry="8" fill="#FF9E9E" stroke="#2C1808" stroke-width="2"/>
+  <!-- beak closed -->
+  <path d="M-9,18 L0,12 L9,18 L0,26 Z" fill="#E87020" stroke="#2C1808" stroke-width="2.5" stroke-linejoin="round"/>
+  <line x1="-8" y1="19" x2="8" y2="19" stroke="#2C1808" stroke-width="1.2"/>
+  <!-- left eye pupils shifted up -->
+  <circle cx="-22" cy="10" r="14" fill="white" stroke="#2C1808" stroke-width="3.5"/>
+  <circle cx="-21" cy="8" r="9" fill="#2C1808"/>
+  <circle cx="-18" cy="4" r="3.5" fill="white"/>
+  <circle cx="-23" cy="14" r="1.5" fill="white" opacity="0.5"/>
+  <!-- right eye pupils shifted up -->
+  <circle cx="22" cy="10" r="14" fill="white" stroke="#2C1808" stroke-width="3.5"/>
+  <circle cx="23" cy="8" r="9" fill="#2C1808"/>
+  <circle cx="26" cy="4" r="3.5" fill="white"/>
+  <circle cx="21" cy="14" r="1.5" fill="white" opacity="0.5"/>
+  <!-- worried brows angled inward W shape -->
+  <path d="M-34,-6 Q-22,-14 -10,-8" stroke="#2C1808" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M10,-8 Q22,-14 34,-6" stroke="#2C1808" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- heavier blush -->
+  <ellipse cx="-34" cy="22" rx="9" ry="5.5" fill="#F09080" opacity="0.5"/>
+  <ellipse cx="34" cy="22" rx="9" ry="5.5" fill="#F09080" opacity="0.5"/>
+  <!-- sweat drop right side -->
+  <path d="M46,2 Q49,-5 52,2 Q52,9 46,9 Q40,9 40,2 Z" fill="#90C0E8" opacity="0.85"/>
+</svg>

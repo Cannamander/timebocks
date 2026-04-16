@@ -36,6 +36,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.timebox.app.ui.components.PercyEmotion
+import com.timebox.app.ui.components.PercyWidget
 
 private val DarkBg = Color(0xFF0F0F0F)
 private val AccentGreen = Color(0xFF4CAF50)
@@ -52,6 +54,7 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val percyLine by viewModel.percyDialogue.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -72,6 +75,14 @@ fun OnboardingScreen(
             .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
+        PercyWidget(
+            dialogueLine = percyLine,
+            emotion = if (viewModel.allGranted) PercyEmotion.HAPPY else PercyEmotion.CALM,
+            modifier = Modifier.padding(top = 4.dp),
+            percySizeDp = 80
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+
         Text(
             text = "Timebox",
             style = MaterialTheme.typography.headlineLarge.copy(

@@ -4,8 +4,14 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.timebox.app.data.model.AppLimit
+import com.timebox.app.data.model.AchievementRecord
 import com.timebox.app.data.repository.AppLimitRepository
+import com.timebox.app.data.repository.GamificationRepository
+import com.timebox.app.data.store.AppPreferences
+import com.timebox.app.percy.PercyDialogue
+import com.timebox.app.percy.PercyLines
 import com.timebox.app.service.ServiceManager
+import com.timebox.app.service.DailySummaryManager
 import com.timebox.app.util.BypassAllowance
 import com.timebox.app.util.TimeUtils
 import com.timebox.app.util.UsageStatsHelper
@@ -33,13 +39,23 @@ data class DashboardItem(
 data class DashboardState(
     val items: List<DashboardItem> = emptyList(),
     val isMonitoring: Boolean = false,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val bocksBalance: Int = 0,
+    val currentStreak: Int = 0,
+    val percyLine: String = "",
+    val unseenAchievements: List<AchievementRecord> = emptyList(),
+    val showDailySummary: Boolean = false,
+    val dailySummaryLine: String = "",
+    val pendingStreakMilestone: Int = 0
 )
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val appLimitRepository: AppLimitRepository,
     private val usageStatsHelper: UsageStatsHelper,
+    private val gamificationRepository: GamificationRepository,
+    private val dailySummaryManager: DailySummaryManager,
+    private val appPreferences: AppPreferences,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -50,6 +66,38 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             appLimitRepository.getEnabledLimits().collect { limits ->
                 refreshUsageInternal(limits)
+            }
+        }
+
+        viewModelScope.launch {
+            gamificationRepository.getBocksBalance().collect { bocks ->
+                _state.update { it.copy(bocksBalance = bocks) }
+                updatePercyLine()
+            }
+        }
+
+        viewModelScope.launch {
+            gamificationRepository.getStreak().collect { streak ->
+                _state.update { it.copy(currentStreak = streak.currentStreak) }
+                updatePercyLine()
+            }
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(unseenAchievements = gamificationRepository.getUnseenAchievements()) }
+        }
+
+        viewModelScope.launch {
+            val pending = appPreferences.getPendingStreakMilestone()
+            if (pending > 0) {
+                _state.update { it.copy(pendingStreakMilestone = pending) }
+            }
+        }
+
+        viewModelScope.launch {
+            if (dailySummaryManager.shouldShowSummary()) {
+                val line = dailySummaryManager.getDailySummaryDialogue()
+                _state.update { it.copy(showDailySummary = true, dailySummaryLine = line) }
             }
         }
     }
@@ -73,6 +121,7 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             val limits = appLimitRepository.getEnabledLimitsSnapshot()
             refreshUsageInternal(limits)
+            _state.update { it.copy(unseenAchievements = gamificationRepository.getUnseenAchievements()) }
         }
     }
 
@@ -110,5 +159,39 @@ class DashboardViewModel @Inject constructor(
                 isMonitoring = ServiceManager.isRunning(appContext)
             )
         }
+        updatePercyLine()
+    }
+
+    fun onAchievementSeen(achievementId: String) {
+        viewModelScope.launch {
+            gamificationRepository.markAchievementSeen(achievementId)
+            _state.update { it.copy(unseenAchievements = gamificationRepository.getUnseenAchievements()) }
+        }
+    }
+
+    fun onDailySummaryDismissed() {
+        viewModelScope.launch {
+            dailySummaryManager.markSummarySeen()
+            _state.update { it.copy(showDailySummary = false, dailySummaryLine = "") }
+        }
+    }
+
+    fun onStreakMilestoneSeen() {
+        viewModelScope.launch {
+            appPreferences.setPendingStreakMilestone(0)
+            _state.update { it.copy(pendingStreakMilestone = 0) }
+        }
+    }
+
+    private fun updatePercyLine() {
+        val s = _state.value
+        val streak = s.currentStreak
+        val worst = s.items.firstOrNull { it.percentUsed >= 0.8f }?.appName
+        val line = when {
+            streak >= 7 -> PercyLines.get(PercyDialogue.StreakMilestone(streak))
+            worst != null -> PercyLines.get(PercyDialogue.FirstExtension(worst))
+            else -> "Everything's fine. For now."
+        }
+        _state.update { it.copy(percyLine = line) }
     }
 }

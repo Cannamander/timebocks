@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-70 -20 140 165" width="200" height="200">
+  <!-- shadow -->
+  <ellipse cx="0" cy="132" rx="38" ry="6" fill="#111111" opacity="0.3"/>
+  <!-- body blob -->
+  <path d="M0,-10 C-52,-10 -65,28 -65,72 C-65,114 -36,132 0,132 C36,132 65,114 65,72 C65,28 52,-10 0,-10 Z" fill="#F5D020" stroke="#2C1808" stroke-width="5" stroke-linejoin="round"/>
+  <!-- belly highlight -->
+  <ellipse cx="0" cy="85" rx="32" ry="36" fill="#FFF5A0" opacity="0.45"/>
+  <!-- body gloss -->
+  <ellipse cx="-18" cy="12" rx="12" ry="8" fill="white" opacity="0.18" transform="rotate(-20,-18,12)"/>
+  <!-- left wing spread confrontational -->
+  <path d="M-65,50 C-86,36 -96,56 -90,74 C-84,88 -68,86 -62,70 Z" fill="#E8C010" stroke="#2C1808" stroke-width="4" stroke-linejoin="round"/>
+  <line x1="-88" y1="78" x2="-84" y2="87" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <line x1="-78" y1="84" x2="-76" y2="93" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <line x1="-68" y1="85" x2="-68" y2="94" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <!-- right wing spread confrontational -->
+  <path d="M65,50 C86,36 96,56 90,74 C84,88 68,86 62,70 Z" fill="#E8C010" stroke="#2C1808" stroke-width="4" stroke-linejoin="round"/>
+  <line x1="88" y1="78" x2="84" y2="87" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <line x1="78" y1="84" x2="76" y2="93" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <line x1="68" y1="85" x2="68" y2="94" stroke="#2C1808" stroke-width="2" stroke-linecap="round"/>
+  <!-- left foot -->
+  <ellipse cx="-20" cy="130" rx="14" ry="7" fill="#E87020" stroke="#2C1808" stroke-width="3"/>
+  <line x1="-30" y1="132" x2="-36" y2="140" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="-20" y1="134" x2="-20" y2="142" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="-10" y1="132" x2="-6" y2="140" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- right foot -->
+  <ellipse cx="20" cy="130" rx="14" ry="7" fill="#E87020" stroke="#2C1808" stroke-width="3"/>
+  <line x1="10" y1="132" x2="6" y2="140" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="20" y1="134" x2="20" y2="142" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="30" y1="132" x2="36" y2="140" stroke="#2C1808" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- spikier comb angry -->
+  <path d="M-16,-8 C-22,-30 -10,-42 -2,-32 C2,-40 8,-44 14,-34 C20,-26 18,-10 14,-8 Z" fill="#D44020" stroke="#2C1808" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- wattle -->
+  <ellipse cx="16" cy="28" rx="6" ry="8" fill="#FF9E9E" stroke="#2C1808" stroke-width="2"/>
+  <!-- open beak angular angry -->
+  <path d="M-10,14 L0,8 L10,14 L8,26 L-8,26 Z" fill="#E87020" stroke="#2C1808" stroke-width="2.5" stroke-linejoin="round"/>
+  <ellipse cx="0" cy="23" rx="6" ry="3.5" fill="#1C1008"/>
+  <!-- left eye wide intense -->
+  <circle cx="-22" cy="10" r="14" fill="white" stroke="#2C1808" stroke-width="3.5"/>
+  <circle cx="-21" cy="10" r="10" fill="#2C1808"/>
+  <circle cx="-18" cy="5.5" r="3.8" fill="white"/>
+  <!-- right eye wide intense -->
+  <circle cx="22" cy="10" r="14" fill="white" stroke="#2C1808" stroke-width="3.5"/>
+  <circle cx="23" cy="10" r="10" fill="#2C1808"/>
+  <circle cx="26" cy="5.5" r="3.8" fill="white"/>
+  <!-- angry brows steep V down toward center -->
+  <path d="M-34,-10 Q-22,-2 -10,-8" stroke="#2C1808" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M10,-8 Q22,-2 34,-10" stroke="#2C1808" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <!-- no blush -->
+</svg>

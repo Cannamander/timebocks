@@ -5,4 +5,5 @@ object NavRoutes {
     const val DASHBOARD = "dashboard"
     const val APP_LIST = "applist"
     const val SETTINGS = "settings"
+    const val ACHIEVEMENTS = "achievements"
 }
